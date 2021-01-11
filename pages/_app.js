@@ -1,6 +1,6 @@
 import '@/styles/styles.scss'
 import 'bootstrap/scss/bootstrap.scss';
-import App from 'next/app';
+// import App from 'next/app';
 import AppNavbar from '@/components/shared/navbar';
 import Hero from '@/components/shared/hero';
 
