@@ -1,119 +1,66 @@
 import axios from 'axios';
 import PortfolioCard from '../../components/portfolio/portfolioCard';
 import Link from 'next/link';
-import {useState} from "react";
+import {useState, useEffect} from "react";
+import { useQuery, useMutation } from '@apollo/client'
+import { fetch_portfolios } from '@/apollo/queries'
+import { create_portfolio, delete_portfolio, update_portfolio } from '@/apollo/mutations'
 
-export const deletePortfolioMutation = (id) => {
-	const queryText = `
-		mutation DeletePortfolio {
-			deletePortfolio(id: "${id}")
-		}`
-	return axios.post(`http://localhost:7003/graphql`, { query: queryText })
-		.then(res => res.data.data)
-		.then(data => data.deletePortfolio)
-}
+const Portfolios = () => {
+	const {loading, error, data} = useQuery(fetch_portfolios)
+	const [addNewPortfolio] = useMutation(create_portfolio, {
+		update(cache, {data: {createPortfolio}}) {
+			const {portfolios} = cache.readQuery({query: fetch_portfolios})
+			cache.writeQuery({
+				query: fetch_portfolios,
+				data: {portfolios: [createPortfolio, ...portfolios, ]}
+			})
+		}
+	})
+	const [removeOldPortfolio] = useMutation(delete_portfolio)
+	const [updOldPortfolio] = useMutation(update_portfolio)
+	const [portfolios, setPortfolios] = useState()
 
-export const updatePortfolioMutation = (id) => {
-	const queryText = `
-		mutation UpdatePortfolio {
-			updatePortfolio(id: "${id}", p: {
-				title: "UPDATED",
-				company: "UPDATED",
-				companyWebsite: "www.boogle.com",
-				location: "Krsk, Russia",
-				jobTitle: "Engineer",
-				description: "=====>>GOLOLOL",
-				startDate: "30/12/2020",
-				endDate: "30/12/2020"
-			}) {
-				_id
-				title
-				company
-				companyWebsite
-				location
-				jobTitle
-				description
-				startDate
-				endDate
-			}
-		}`
-	return axios.post(`http://localhost:7003/graphql`, { query: queryText })
-		.then(res => res.data.data)
-		.then(data => data.updatePortfolio)
-}
+	useEffect(() => {
+		if (loading === false) {
+			setPortfolios(data.portfolios)
+		} else {
+			return
+		}
+	}, [loading])
 
-export const createPortfolioMutation = () => {
-	const queryText = `
-		mutation CreatePortfolio{
-			createPortfolio(p: {
-				title: "New",
-				company: "New",
-				companyWebsite: "www.boogle.com",
-				location: "Krsk, Russia",
-				jobTitle: "Engineer",
-				description: "LOLOLOLOLOLOLOLOL",
-				startDate: "30/12/2020",
-				endDate: "30/12/2020"
-			}) {
-				_id
-				title
-				company
-				companyWebsite
-				location
-				jobTitle
-				description
-				startDate
-				endDate
-			}
-		}`
-	return axios.post(`http://localhost:7003/graphql`, { query: queryText })
-		.then(res => res.data.data)
-		.then(data => data.createPortfolio)
-}
-
-export const fetchPortfolios = () => {
-	const queryText = `
-			query Portfolios {
-				portfolios {
-					_id
-					title
-					company
-					companyWebsite
-					location
-					jobTitle
-					description
-					startDate
-					endDate
-				}
-			}`
-	return axios.post(`http://localhost:7003/graphql`, { query: queryText })
-		.then(res => res.data.data)
-		.then(data => data.portfolios)
-}
-
-const Portfolios = ({ data}) => {
-	const [portfolios, setPortfolios] = useState(data)
-
-	const createPortfolio = async () => {
-		const np = await createPortfolioMutation()
-		const newPortfolios = [np, ...portfolios]
+	const createP = async () => {
+		const np = await addNewPortfolio()
+		// console.log(np.data.createPortfolio)
+		const newPortfolios = [np.data.createPortfolio, ...portfolios]
 		setPortfolios(newPortfolios)
 	}
 
-	const updatePortfolio = async (id) => {
-		const np = await updatePortfolioMutation(id)
-		const index = portfolios.findIndex(p => p._id === id)
+	const updateP = async (id) => {
+		const up = await updOldPortfolio({variables: {id}})
+		console.log(up.data.updatePortfolio)
+		const updated = up.data.updatePortfolio._id
+		const index = portfolios.findIndex(p => p._id === updated)
 		const newPortfolios = [...portfolios]
-		newPortfolios[index] = np
+		newPortfolios[index] = up.data.updatePortfolio
 		setPortfolios(newPortfolios)
 	}
 
-	const deletePortfolio = async (id) => {
-		const deleted = await deletePortfolioMutation(id)
+	const deleteP = async (id) => {
+		const dp = await removeOldPortfolio({variables: {id}})
+		console.log(dp.data.deletePortfolio)
+		const deleted = dp.data.deletePortfolio
 		const index = portfolios.findIndex(p => p._id === deleted)
 		const newPortfolios = [...portfolios]
 		newPortfolios.splice(index, 1)
 		setPortfolios(newPortfolios)
+	}
+
+	if (loading || portfolios === undefined) {
+		return <h1>Loading ...</h1>;
+	}
+	if (error) {
+		return <h1>Error...</h1>
 	}
 
 	return <>
@@ -124,7 +71,7 @@ const Portfolios = ({ data}) => {
 				</div>
 				<button
 					className="btn btn-primary"
-					onClick={createPortfolio}
+					onClick={createP}
 				>
 					Create Portfolio
 				</button>
@@ -142,9 +89,9 @@ const Portfolios = ({ data}) => {
 								</a>
 							</Link>
 							<button className="btn btn-warning"
-								onClick={() => {updatePortfolio(el._id)}}>Update Portfolio</button>			
+								onClick={() => {updateP(el._id)}}>Update Portfolio</button>
 							<button className="btn btn-danger"
-								onClick={() => {deletePortfolio(el._id)}}>Delete Portfolio</button>			
+								onClick={() => {deleteP(el._id)}}>Delete Portfolio</button>
 						</div>
 					})
 				}	
@@ -160,13 +107,13 @@ const Portfolios = ({ data}) => {
 // 	}
 // }
 
-export const getStaticProps = async (ctx) => {
-	const portfolios = await fetchPortfolios()
-	return {
-		props: {
-			data: portfolios
-		}
-	}
-}
+// export const getStaticProps = async (ctx) => {
+// 	const portfolios = await fetchPortfolios()
+// 	return {
+// 		props: {
+// 			data: portfolios
+// 		}
+// 	}
+// }
 
 export default Portfolios;

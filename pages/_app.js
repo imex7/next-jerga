@@ -1,11 +1,19 @@
 import '@/styles/styles.scss'
-import 'bootstrap/scss/bootstrap.scss';
 // import App from 'next/app';
+import 'bootstrap/scss/bootstrap.scss';
+import { ApolloClient, InMemoryCache } from '@apollo/client'
+import { ApolloProvider } from '@apollo/client'
 import AppNavbar from '@/components/shared/navbar';
 import Hero from '@/components/shared/hero';
 
+export const apolloClient = new ApolloClient({
+  uri: 'http://localhost:7003/graphql',
+  cache: new InMemoryCache()
+})
+
 function MyApp({ Component, pageProps }) {
   return <>
+  <ApolloProvider client={apolloClient}>
     <div className="portfolio-app">
       <AppNavbar />
       {/* <pre>{JSON.stringify(pageProps.appData, null, 4)}</pre> */}
@@ -19,6 +27,7 @@ function MyApp({ Component, pageProps }) {
         </div>
       </footer>}
     </div>
+  </ ApolloProvider>
   </>
 }
 

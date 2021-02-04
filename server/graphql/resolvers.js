@@ -18,6 +18,7 @@ exports.portfolioMutations = {
 		const id = require('crypto').randomBytes(10).toString('hex')
 		const newPortfolio = {...p}
 		newPortfolio._id = id
+		newPortfolio.startDate = new Date(Date.now()).toLocaleString('ru')
 		data.portfolios.unshift(newPortfolio)
 		return newPortfolio
 	},
@@ -32,9 +33,10 @@ exports.portfolioMutations = {
 	},
 	deletePortfolio: (root, {id}) => {
 		console.log(root);
-		const index = data.portfolios.findIndex((el) => {
-			return el._id === id
+		const index = data.portfolios.findIndex((item) => {
+			return item._id === id
 		})
+		// const oldPortfolio = data.portfolios[index]
 		data.portfolios.splice(index, 1)
 		return id
 	}
