@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuery } from '@apollo/client'
 import { get_portfolio_by_id, fetch_portfolios } from '@/apollo/queries'
 import { apolloClient } from '../_app'
+import withApollo from '@/hoc/withApollo'
 
 const PortfolioDetail = ({id}) => {
 	const {loading, error, data} = useQuery(get_portfolio_by_id, {variables: {id}})
@@ -60,7 +61,7 @@ export const getStaticPaths = async () => {
 		return result
 	});
 	const paths = res.data.portfolios.map((el) => {
-		console.log(el._id);
+		// console.log(el._id);
 		return {
 			params: { 
 				id: el._id
@@ -83,5 +84,13 @@ export const getStaticProps = async ({params}) => {
 	}
 }
 
+export const getInitialProps = async ({query}) => {
+	console.log('sdlkf;dlk');
+	return {
+		query
+	}
+}
 
-export default PortfolioDetail;
+
+export default PortfolioDetail
+// export default withApollo(PortfolioDetail);

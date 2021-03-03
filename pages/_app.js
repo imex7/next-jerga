@@ -1,5 +1,5 @@
-import '@/styles/styles.scss'
 // import App from 'next/app';
+import '@/styles/styles.scss'
 import 'bootstrap/scss/bootstrap.scss';
 import { ApolloClient, InMemoryCache } from '@apollo/client'
 import { ApolloProvider } from '@apollo/client'

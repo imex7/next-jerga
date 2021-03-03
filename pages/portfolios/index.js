@@ -1,26 +1,21 @@
-import axios from 'axios';
 import PortfolioCard from '../../components/portfolio/portfolioCard';
 import Link from 'next/link';
 import {useState, useEffect} from "react";
-import { useQuery, useMutation } from '@apollo/client'
-import { fetch_portfolios } from '@/apollo/queries'
-import { create_portfolio, delete_portfolio, update_portfolio } from '@/apollo/mutations'
+import {
+	fetchPortfoliosAction,
+	updOldPortfolioAction,
+	addNewPortfolioAction,
+	removeOldPortfolioAction
+} from '@/apollo/actions'
+// import withApollo from '@/hoc/withApollo'
 
 const Portfolios = () => {
-	const {loading, error, data} = useQuery(fetch_portfolios)
-	const [addNewPortfolio] = useMutation(create_portfolio, {
-		update(cache, {data: {createPortfolio}}) {
-			const {portfolios} = cache.readQuery({query: fetch_portfolios})
-			cache.writeQuery({
-				query: fetch_portfolios,
-				data: {portfolios: [createPortfolio, ...portfolios, ]}
-			})
-		}
-	})
-	const [removeOldPortfolio] = useMutation(delete_portfolio)
-	const [updOldPortfolio] = useMutation(update_portfolio)
-	const [portfolios, setPortfolios] = useState()
+	const {loading, error, data} = fetchPortfoliosAction()
+	const [updOldPortfolio] = updOldPortfolioAction()
+	const [addNewPortfolio] = addNewPortfolioAction()
+	const [removeOldPortfolio] = removeOldPortfolioAction()
 
+	const [portfolios, setPortfolios] = useState()
 	useEffect(() => {
 		if (loading === false) {
 			setPortfolios(data.portfolios)
@@ -31,7 +26,6 @@ const Portfolios = () => {
 
 	const createP = async () => {
 		const np = await addNewPortfolio()
-		// console.log(np.data.createPortfolio)
 		const newPortfolios = [np.data.createPortfolio, ...portfolios]
 		setPortfolios(newPortfolios)
 	}
@@ -116,4 +110,5 @@ const Portfolios = () => {
 // 	}
 // }
 
-export default Portfolios;
+export default Portfolios
+// export default withApollo(Portfolios);

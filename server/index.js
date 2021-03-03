@@ -1,7 +1,6 @@
 const express = require('express')
 const next = require('next')
 const {ApolloServer, gql} = require('apollo-server-express')
-// const { buildSchema } = require('graphql');
 
 const port = parseInt(process.env.PORT, 10) || 7003
 const dev = process.env.NODE_ENV !== 'production'
@@ -10,6 +9,9 @@ const handle = app.getRequestHandler()
 
 const {portfolioQueries, portfolioMutations} = require('./graphql/resolvers')
 const {portfolioTypes} = require('./graphql/types')
+
+const db = require('./database')
+db.connect()
 
 app.prepare().then(() => {
   const server = express()
